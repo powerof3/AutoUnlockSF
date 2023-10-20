@@ -1,21 +1,11 @@
 #pragma once
 
-#include "RE/M/Misc.h"
+#include "RE.h"
 #include "Settings.h"
-
-namespace RE
-{
-	void RemoveItem(TESObjectREFR* a_refr, const BGSObjectInstance& a_object, std::uint32_t a_count);
-}
 
 namespace AutoUnlock
 {
-    namespace detail
-	{
-		bool player_has_digipick();
-	}
-
-	bool CanLockpick(const Setting& a_setting, const RE::REFR_LOCK* a_lockData, const RE::TESObjectREFR* a_owner);
+	bool CanAutoUnlock(const Setting& a_setting, const RE::REFR_LOCK* a_lockData, const RE::TESObjectREFR* a_owner);
 
 	template <RE::FormType FormType>
 	struct Activate
@@ -28,11 +18,25 @@ namespace AutoUnlock
 			if (activatedRef && actionRef && actionRef->IsPlayerRef()) {
 				if (const auto lock = activatedRef->GetLock()) {
 					const auto settings = Settings::GetSingleton();
-					if (CanLockpick(settings->GetSetting(FormType), lock, activatedRef)) {
+					const auto formSetting = settings->GetSetting(FormType);
+
+				    if (CanAutoUnlock(formSetting, lock, activatedRef)) {
 						RE::RemoveItem(RE::PlayerCharacter::GetSingleton(), { RE::TESForm::LookupByID(0xA), nullptr }, 1);
+
 						if (settings->playSoundOnUnlock) {
 							RE::PlayMenuSound("UI_Menu_Minigame_Security_Puzzle_Success");
 						}
+
+                        auto lockLevel = lock->GetLockLevel(activatedRef);
+						if (lockLevel == RE::LOCK_LEVEL::kInaccessible) {
+							lockLevel = static_cast<RE::LOCK_LEVEL>(formSetting.unlockInaccessible);
+						}
+
+						const auto lockpickXP = RE::GetLockpickXPReward(lockLevel);
+						RE::RewardXP(RE::PlayerCharacter::GetSingleton(), lockpickXP, 4, true, activatedRef);
+
+						// TODO - figure out lockpicking events/crime bounties
+
 						a_data.activatedRef->Unlock();
 					}
 				}

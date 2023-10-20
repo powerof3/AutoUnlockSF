@@ -1,21 +1,6 @@
 #include "Hooks.h"
 #include "Settings.h"
 
-#include "RE/B/BGSInventoryItem.h"
-#include "RE/E/ExtraLock.h"
-
-namespace RE
-{
-	void RemoveItem(TESObjectREFR* a_refr, const BGSObjectInstance& a_object, std::uint32_t a_count)
-	{
-		constexpr std::uint32_t handle = 0;
-
-		using func_t = void (*)(TESObjectREFR*, const std::uint32_t&, const BGSObjectInstance&, std::uint32_t);
-		REL::Relocation<func_t> func{ REL::ID(106863) };
-		return func(a_refr, handle, a_object, a_count);
-	}
-}
-
 namespace AutoUnlock
 {
 	namespace detail
@@ -34,28 +19,34 @@ namespace AutoUnlock
 
 			return hasDigipick;
 		}
+
+		bool can_unlock(const std::uint32_t a_playerLockpickLevel, std::uint32_t a_lockLevel, bool a_oneRankHigher)
+		{
+			if (a_oneRankHigher) {
+				a_lockLevel += 1;
+			}
+			return a_playerLockpickLevel >= a_lockLevel;
+		}
 	}
 
-	bool CanLockpick(const Setting& a_setting, const RE::REFR_LOCK* a_lockData, const RE::TESObjectREFR* a_owner)
+	bool CanAutoUnlock(const Setting& a_setting, const RE::REFR_LOCK* a_lockData, const RE::TESObjectREFR* a_owner)
 	{
 		if (!a_lockData->IsLocked() || !detail::player_has_digipick()) {
 			return false;
 		}
 
-		const auto lockLevel = a_lockData->GetLockLevel(a_owner);
-
 		float entryPoint = 0.0f;
 		RE::BGSEntryPoint::HandleEntryPoint(RE::BGSEntryPoint::ENTRY_POINT::kGetPlayerGateHacking, RE::PlayerCharacter::GetSingleton(), std::addressof(entryPoint));
-		const auto playerLockpickingLevel = static_cast<RE::LOCK_LEVEL>(entryPoint);
+        const auto playerLockpickingLevel = static_cast<std::uint32_t>(entryPoint);
 
-		switch (lockLevel) {
+		switch (const auto lockLevel = a_lockData->GetLockLevel(a_owner)) {
 		case RE::LOCK_LEVEL::kEasy:
 		case RE::LOCK_LEVEL::kAverage:
 		case RE::LOCK_LEVEL::kHard:
 		case RE::LOCK_LEVEL::kVeryHard:
-			return a_setting.autoUnlock && playerLockpickingLevel >= lockLevel;
+			return a_setting.autoUnlock != -1 && detail::can_unlock(playerLockpickingLevel, std::to_underlying(lockLevel), a_setting.autoUnlock == 1);
 		case RE::LOCK_LEVEL::kInaccessible:
-			return a_setting.unlockInaccessible != -1 && playerLockpickingLevel >= static_cast<RE::LOCK_LEVEL>(a_setting.unlockInaccessible);
+			return a_setting.unlockInaccessible != -1 && detail::can_unlock(playerLockpickingLevel, a_setting.unlockInaccessible, a_setting.autoUnlock == 1);
 		default:
 			return false;
 		}

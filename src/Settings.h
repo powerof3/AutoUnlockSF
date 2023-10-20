@@ -4,12 +4,12 @@ struct Setting
 {
 	void Load(const char* a_type, CSimpleIniA& a_ini, bool a_writeComments)
 	{
-		ini::get_value(a_ini, autoUnlock, a_type, "bAutoUnlock", a_writeComments ? ";Automatically unlock objects if you have the required Security perk rank" : nullptr);
-		ini::get_value(a_ini, unlockInaccessible, a_type, "iUnlockInaccessibleLevel", a_writeComments ? ";Unlock inaccessible objects;\n;-1 : disabled, 0-3 : required Security perk rank" : nullptr);
+		ini::get_value(a_ini, autoUnlock, a_type, "iAutoUnlockMode", a_writeComments ? ";Automatically unlock objects if you have the Security perk.\n;-1 : disabled, 0 : autounlock if perk rank is equal to or greater than lock level, 1 : autounlock if perk rank is greater than lock level" : nullptr);
+		ini::get_value(a_ini, unlockInaccessible, a_type, "iUnlockInaccessibleLevel", a_writeComments ? ";Unlock inaccessible objects.\n;-1 : disabled, 0-3 : required Security perk rank" : nullptr);
 	}
 
 	// members
-	bool         autoUnlock{ true };
+	std::int32_t autoUnlock{ 0 };
 	std::int32_t unlockInaccessible{ -1 };
 };
 
