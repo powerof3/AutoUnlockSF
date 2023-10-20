@@ -52,7 +52,7 @@ namespace AutoUnlock
 		}
 	}
 
-	void InstallOnPostLoad()
+    void InstallOnPostLoad()
 	{
 		Settings::GetSingleton()->Load();
 

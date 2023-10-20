@@ -2,6 +2,7 @@
 
 #include "RE/B/BGSInventoryItem.h"
 #include "RE/E/ExtraLock.h"
+#include "RE/L/LockPickedEvent.h"
 #include "RE/M/Misc.h"
 
 namespace RE

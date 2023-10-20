@@ -21,23 +21,25 @@ namespace AutoUnlock
 					const auto formSetting = settings->GetSetting(FormType);
 
 				    if (CanAutoUnlock(formSetting, lock, activatedRef)) {
-						RE::RemoveItem(RE::PlayerCharacter::GetSingleton(), { RE::TESForm::LookupByID(0xA), nullptr }, 1);
+						auto lockLevel = lock->GetLockLevel(activatedRef);
+						if (lockLevel == RE::LOCK_LEVEL::kInaccessible) {
+							lockLevel = static_cast<RE::LOCK_LEVEL>(formSetting.unlockInaccessible);
+						}
+
+				        RE::RemoveItem(RE::PlayerCharacter::GetSingleton(), { RE::TESForm::LookupByID(0xA), nullptr }, 1);
+
+						a_data.activatedRef->Unlock();
+
+						RE::LockPickedEvent::Notify(RE::NiPointer(actionRef), RE::NiPointer(activatedRef), true, true, lockLevel, 1);
 
 						if (settings->playSoundOnUnlock) {
 							RE::PlayMenuSound("UI_Menu_Minigame_Security_Puzzle_Success");
 						}
 
-                        auto lockLevel = lock->GetLockLevel(activatedRef);
-						if (lockLevel == RE::LOCK_LEVEL::kInaccessible) {
-							lockLevel = static_cast<RE::LOCK_LEVEL>(formSetting.unlockInaccessible);
-						}
-
 						const auto lockpickXP = RE::GetLockpickXPReward(lockLevel);
 						RE::RewardXP(RE::PlayerCharacter::GetSingleton(), lockpickXP, 4, true, activatedRef);
 
-						// TODO - figure out lockpicking events/crime bounties
-
-						a_data.activatedRef->Unlock();
+						// TODO - figure out crime bounties/terminal events
 					}
 				}
 			}
