@@ -20,6 +20,26 @@ namespace AutoUnlock
 			return hasDigipick;
 		}
 
+		// key exists but can still be picked
+		bool player_has_key(const RE::REFR_LOCK* a_lockData)
+		{
+			if (!a_lockData->key) {
+				return false;
+			}
+
+		    bool hasKey = false;
+
+			RE::PlayerCharacter::GetSingleton()->ForEachInventoryItem([&](const RE::BGSInventoryItem& a_item) {
+				if (a_item.object == a_lockData->key) {
+					hasKey = true;
+					return RE::BSContainer::ForEachResult::kStop;
+				}
+				return RE::BSContainer::ForEachResult::kContinue;
+			});
+
+			return hasKey;
+		}
+
 		bool can_unlock(const std::uint32_t a_playerLockpickLevel, std::uint32_t a_lockLevel, bool a_oneRankHigher)
 		{
 			if (a_oneRankHigher) {
@@ -31,7 +51,7 @@ namespace AutoUnlock
 
 	bool CanAutoUnlock(const Setting& a_setting, const RE::REFR_LOCK* a_lockData, const RE::TESObjectREFR* a_owner)
 	{
-		if (!a_lockData->IsLocked() || !detail::player_has_digipick()) {
+		if (!a_lockData->IsLocked() || !detail::player_has_digipick() || detail::player_has_key(a_lockData)) {
 			return false;
 		}
 
@@ -52,6 +72,11 @@ namespace AutoUnlock
 		}
 	}
 
+	RE::BSEventNotifyControl EventHandler::ProcessEvent(const RE::LockPickedEvent& a_event, RE::BSTEventSource<RE::LockPickedEvent>*)
+	{
+		return RE::BSEventNotifyControl::kContinue;
+	}
+
     void InstallOnPostLoad()
 	{
 		Settings::GetSingleton()->Load();
@@ -59,5 +84,7 @@ namespace AutoUnlock
 		Activate<RE::FormType::kDOOR>::Install(RE::VTABLE::TESObjectDOOR[6]);
 		Activate<RE::FormType::kCONT>::Install(RE::VTABLE::TESObjectCONT[12]);
 		Activate<RE::FormType::kTERM>::Install(RE::VTABLE::BGSTerminal[11]);
+
+		//RE::LockPickedEvent::GetEventSource()->RegisterSink(EventHandler::GetSingleton());
 	}
 }
