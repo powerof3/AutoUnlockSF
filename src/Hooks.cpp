@@ -21,23 +21,9 @@ namespace AutoUnlock
 		}
 
 		// key exists but can still be picked
-		bool player_has_key(const RE::REFR_LOCK* a_lockData)
+		bool player_has_key(RE::REFR_LOCK* a_lockData, RE::TESObjectREFR* a_owner)
 		{
-			if (!a_lockData->key) {
-				return false;
-			}
-
-		    bool hasKey = false;
-
-			RE::PlayerCharacter::GetSingleton()->ForEachInventoryItem([&](const RE::BGSInventoryItem& a_item) {
-				if (a_item.object == a_lockData->key) {
-					hasKey = true;
-					return RE::BSContainer::ForEachResult::kStop;
-				}
-				return RE::BSContainer::ForEachResult::kContinue;
-			});
-
-			return hasKey;
+			return a_lockData->key&& RE::HasKey(RE::PlayerCharacter::GetSingleton(), a_owner, 1, a_lockData);
 		}
 
 		bool can_unlock(const std::uint32_t a_playerLockpickLevel, std::uint32_t a_lockLevel, bool a_oneRankHigher)
@@ -49,15 +35,15 @@ namespace AutoUnlock
 		}
 	}
 
-	bool CanAutoUnlock(const Setting& a_setting, const RE::REFR_LOCK* a_lockData, const RE::TESObjectREFR* a_owner)
+	bool CanAutoUnlock(const Setting& a_setting, RE::REFR_LOCK* a_lockData, RE::TESObjectREFR* a_owner)
 	{
-		if (!a_lockData->IsLocked() || !detail::player_has_digipick() || detail::player_has_key(a_lockData)) {
+		if (!a_lockData->IsLocked() || !detail::player_has_digipick() || detail::player_has_key(a_lockData, a_owner)) {
 			return false;
 		}
 
 		float entryPoint = 0.0f;
 		RE::BGSEntryPoint::HandleEntryPoint(RE::BGSEntryPoint::ENTRY_POINT::kGetPlayerGateHacking, RE::PlayerCharacter::GetSingleton(), std::addressof(entryPoint));
-        const auto playerLockpickingLevel = static_cast<std::uint32_t>(entryPoint);
+		const auto playerLockpickingLevel = static_cast<std::uint32_t>(entryPoint);
 
 		switch (const auto lockLevel = a_lockData->GetLockLevel(a_owner)) {
 		case RE::LOCK_LEVEL::kEasy:
@@ -72,19 +58,12 @@ namespace AutoUnlock
 		}
 	}
 
-	RE::BSEventNotifyControl EventHandler::ProcessEvent(const RE::LockPickedEvent& a_event, RE::BSTEventSource<RE::LockPickedEvent>*)
-	{
-		return RE::BSEventNotifyControl::kContinue;
-	}
-
-    void InstallOnPostLoad()
+	void InstallOnPostLoad()
 	{
 		Settings::GetSingleton()->Load();
 
-		Activate<RE::FormType::kDOOR>::Install(RE::VTABLE::TESObjectDOOR[6]);
-		Activate<RE::FormType::kCONT>::Install(RE::VTABLE::TESObjectCONT[12]);
-		Activate<RE::FormType::kTERM>::Install(RE::VTABLE::BGSTerminal[11]);
-
-		//RE::LockPickedEvent::GetEventSource()->RegisterSink(EventHandler::GetSingleton());
+		Activate<RE::TESObjectDOOR>::Install(6);
+		Activate<RE::TESObjectCONT>::Install(12);
+		Activate<RE::BGSTerminal>::Install(11);
 	}
 }

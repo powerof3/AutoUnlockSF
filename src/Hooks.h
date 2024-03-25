@@ -5,9 +5,9 @@
 
 namespace AutoUnlock
 {
-	bool CanAutoUnlock(const Setting& a_setting, const RE::REFR_LOCK* a_lockData, const RE::TESObjectREFR* a_owner);
+	bool CanAutoUnlock(const Setting& a_setting, RE::REFR_LOCK* a_lockData, RE::TESObjectREFR* a_owner);
 
-	template <RE::FormType FormType>
+	template <class T>
 	struct Activate
 	{
 		static void thunk(std::uintptr_t a_this, RE::OBJ_ACTIVATE_DATA& a_data)
@@ -18,7 +18,7 @@ namespace AutoUnlock
 			if (activatedRef && actionRef && actionRef->IsPlayerRef()) {
 				if (const auto lock = activatedRef->GetLock()) {
 					const auto  settings = Settings::GetSingleton();
-					const auto& formSetting = settings->GetSetting(FormType);
+				    const auto& formSetting = settings->GetSetting(T::FORMTYPE);
 
 					if (CanAutoUnlock(formSetting, lock, activatedRef)) {
 						auto lockLevel = lock->GetLockLevel(activatedRef);
@@ -37,14 +37,14 @@ namespace AutoUnlock
 						// unlock + send TESLockChangedEvent
 						activatedRef->Unlock();
 
-					    // send LockPickEvent
+						// send LockPickEvent
 						RE::LockPickedEvent::Notify(RE::NiPointer(actionRef), RE::NiPointer(activatedRef), true, activatedRef->IsCrimeToActivate(), lockLevel, 1);
 
 						// send story event
-                        const RE::BGSPickLockEvent storyEvent(actionRef, activatedRef);
+						const RE::BGSPickLockEvent storyEvent(actionRef, activatedRef);
 						RE::BGSStoryEventManager::GetSingleton()->AddEvent(storyEvent);
 
-					    // remove digipick (ignore ModLockpickRewardKeyChance entry point)
+						// remove digipick (ignore ModLockpickRewardKeyChance entry point)
 						RE::RemoveItem(RE::PlayerCharacter::GetSingleton(), { RE::TESForm::LookupByID(0xA), nullptr }, 1);
 
 						// TODO - figure out crime bounties
@@ -57,18 +57,11 @@ namespace AutoUnlock
 		static inline REL::Relocation<decltype(thunk)> func;
 		static inline constexpr std::size_t            idx{ 0x54 };
 
-		static void Install(REL::ID a_id)
+		static void Install(std::size_t a_idx)
 		{
-			stl::write_vfunc<Activate>(a_id);
-			logger::info("Installed {} Activate hook"sv, FormType);
+			stl::write_vfunc<T, Activate>(a_idx);
+			logger::info("Installed {} Activate hook"sv, typeid(T).name());
 		}
-	};
-
-	class EventHandler :
-		public ISingleton<EventHandler>,
-		public RE::BSTEventSink<RE::LockPickedEvent>
-	{
-		RE::BSEventNotifyControl ProcessEvent(const RE::LockPickedEvent& a_event, RE::BSTEventSource<RE::LockPickedEvent>* a_eventSource) override;
 	};
 
 	void InstallOnPostLoad();

@@ -1,9 +1,14 @@
 #pragma once
 
-#include "RE/T/TESKey.h"
-
 namespace RE
 {
+	inline bool HasKey(TESObjectREFR* a_refr, TESObjectREFR* a_activateRef, std::uint32_t a_arg3, REFR_LOCK* a_data)
+	{
+		using func_t = decltype(&HasKey);
+		REL::Relocation<func_t> func{ REL::ID(150485) };
+		return func(a_refr, a_activateRef, a_arg3, a_data);
+	}
+
 	inline void RemoveItem(TESObjectREFR* a_refr, const BGSObjectInstance& a_object, std::uint32_t a_count)
 	{
 		constexpr std::uint32_t handle = 0;
