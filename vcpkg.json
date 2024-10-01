@@ -1,6 +1,6 @@
 {
   "name": "auto-unlock",
-  "version-string": "1.1.4",
+  "version-string": "1.1.5",
   "description": "",
   "homepage": "",
   "license": "MIT",
@@ -10,5 +10,6 @@
     "rsm-binary-io",
     "spdlog",
     "xbyak"
-  ]
+  ],
+  "builtin-baseline": "76d153790caf0592fce8fc4484aa6db18c7d00d4"
 }
