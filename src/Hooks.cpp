@@ -23,7 +23,7 @@ namespace AutoUnlock
 		// key exists but can still be picked
 		bool player_has_key(RE::REFR_LOCK* a_lockData, RE::TESObjectREFR* a_owner)
 		{
-			return a_lockData->key&& RE::HasKey(RE::PlayerCharacter::GetSingleton(), a_owner, 1, a_lockData);
+			return a_lockData->key && RE::HasKey(RE::PlayerCharacter::GetSingleton(), a_owner, 1, a_lockData);
 		}
 
 		bool can_unlock(const std::uint32_t a_playerLockpickLevel, std::uint32_t a_lockLevel, bool a_oneRankHigher)
@@ -61,9 +61,5 @@ namespace AutoUnlock
 	void InstallOnPostLoad()
 	{
 		Settings::GetSingleton()->Load();
-
-		Activate<RE::TESObjectDOOR>::Install(6);
-		Activate<RE::TESObjectCONT>::Install(12);
-		Activate<RE::BGSTerminal>::Install(11);
 	}
 }

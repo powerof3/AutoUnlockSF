@@ -1,5 +1,9 @@
 #include "Hooks.h"
 
+AutoUnlock::Activate<RE::TESObjectDOOR,6> activateDoor;
+AutoUnlock::Activate<RE::TESObjectCONT,12> activateCont;
+AutoUnlock::Activate<RE::BGSTerminal,7> activateTerm;
+
 void MessageHandler(SFSE::MessagingInterface::Message* a_message)
 {
 	switch (a_message->type) {
@@ -11,7 +15,7 @@ void MessageHandler(SFSE::MessagingInterface::Message* a_message)
 	}
 }
 
-DLLEXPORT constinit auto SFSEPlugin_Version = []() noexcept {
+SFSE_EXPORT constinit auto SFSEPlugin_Version = []() noexcept {
 	SFSE::PluginVersionData data{};
 
 	data.PluginVersion(Version::MAJOR);
@@ -26,15 +30,9 @@ DLLEXPORT constinit auto SFSEPlugin_Version = []() noexcept {
 	return data;
 }();
 
-DLLEXPORT bool SFSEAPI SFSEPlugin_Load(const SFSE::LoadInterface* a_sfse)
+SFSEPluginLoad(const SFSE::LoadInterface* a_sfse)
 {
-	SFSE::Init(a_sfse);
-
-	logger::info("Game version : {}", a_sfse->RuntimeVersion());
-	logger::info("Plugin version : {}", Version::NAME);
-
-	const auto messaging = SFSE::GetMessagingInterface();
-	messaging->RegisterListener(MessageHandler);
-
+	SFSE::Init(a_sfse, { .trampoline = false });
+	SFSE::GetMessagingInterface()->RegisterListener(MessageHandler);
 	return true;
 }

@@ -7,10 +7,10 @@ namespace AutoUnlock
 {
 	bool CanAutoUnlock(const Setting& a_setting, RE::REFR_LOCK* a_lockData, RE::TESObjectREFR* a_owner);
 
-	template <class T>
+	template <class T, std::size_t idx>
 	struct Activate
 	{
-		static void thunk(std::uintptr_t a_this, RE::OBJ_ACTIVATE_DATA& a_data)
+		static void ActivateFunc(T* a_this, RE::OBJ_ACTIVATE_DATA& a_data)
 		{
 			const auto activatedRef = a_data.activatedRef;
 			const auto actionRef = a_data.actionRef;
@@ -18,7 +18,7 @@ namespace AutoUnlock
 			if (activatedRef && actionRef && actionRef->IsPlayerRef()) {
 				if (const auto lock = activatedRef->GetLock()) {
 					const auto  settings = Settings::GetSingleton();
-				    const auto& formSetting = settings->GetSetting(T::FORMTYPE);
+					const auto& formSetting = settings->GetSetting(T::FORMTYPE);
 
 					if (CanAutoUnlock(formSetting, lock, activatedRef)) {
 						auto lockLevel = lock->GetLockLevel(activatedRef);
@@ -32,13 +32,17 @@ namespace AutoUnlock
 
 						// award XP
 						const auto lockpickXP = RE::GetLockpickXPReward(lockLevel);
-						RE::RewardXP(RE::PlayerCharacter::GetSingleton(), lockpickXP, 4, true, activatedRef);
+						RE::PlayerCharacter::GetSingleton()->RewardExperience(lockpickXP, 4, true, activatedRef);
 
 						// unlock + send TESLockChangedEvent
 						activatedRef->Unlock();
 
 						// send LockPickEvent
-						RE::LockPickedEvent::Notify(RE::NiPointer(actionRef), RE::NiPointer(activatedRef), true, activatedRef->IsCrimeToActivate(), lockLevel, 1);
+						RE::BGSTerminalMenu* menu = nullptr;
+						if constexpr (std::is_same_v<RE::BGSTerminal, T>) {
+							menu = a_this->menu;
+						}
+						SendLockPickingEvent(actionRef, activatedRef, menu, true, activatedRef->IsCrimeToActivate(), lockLevel, 1);
 
 						// send story event
 						const RE::BGSPickLockEvent storyEvent(actionRef, activatedRef);
@@ -52,16 +56,10 @@ namespace AutoUnlock
 				}
 			}
 
-			return func(a_this, a_data);
+			return _ActivateFunc(a_this, a_data);
 		}
-		static inline REL::Relocation<decltype(thunk)> func;
-		static inline constexpr std::size_t            idx{ 0x54 };
 
-		static void Install(std::size_t a_idx)
-		{
-			stl::write_vfunc<T, Activate>(a_idx);
-			logger::info("Installed {} Activate hook"sv, typeid(T).name());
-		}
+		inline static REL::HookVFT _ActivateFunc{ T::VTABLE[idx], 0x54, ActivateFunc };
 	};
 
 	void InstallOnPostLoad();
