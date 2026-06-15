@@ -45,7 +45,9 @@ namespace AutoUnlock
 		RE::BGSEntryPoint::HandleEntryPoint(RE::BGSEntryPoint::ENTRY_POINT::kGetPlayerGateHacking, RE::PlayerCharacter::GetSingleton(), std::addressof(entryPoint));
 		const auto playerLockpickingLevel = static_cast<std::uint32_t>(entryPoint);
 
-		switch (const auto lockLevel = a_lockData->GetLockLevel(a_owner)) {
+		const auto lockLevel = a_lockData->GetLockLevel(a_owner);
+
+		switch (lockLevel) {
 		case RE::LOCK_LEVEL::kEasy:
 		case RE::LOCK_LEVEL::kAverage:
 		case RE::LOCK_LEVEL::kHard:

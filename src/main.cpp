@@ -1,8 +1,8 @@
 #include "Hooks.h"
 
-AutoUnlock::Activate<RE::TESObjectDOOR,6> activateDoor;
-AutoUnlock::Activate<RE::TESObjectCONT,12> activateCont;
-AutoUnlock::Activate<RE::BGSTerminal,7> activateTerm;
+AutoUnlock::Activate<RE::TESObjectDOOR,4> activateDoor;
+AutoUnlock::Activate<RE::TESObjectCONT,5> activateCont;
+AutoUnlock::Activate<RE::BGSTerminal,6> activateTerm;
 
 void MessageHandler(SFSE::MessagingInterface::Message* a_message)
 {
@@ -30,7 +30,7 @@ SFSE_EXPORT constinit auto SFSEPlugin_Version = []() noexcept {
 	return data;
 }();
 
-SFSEPluginLoad(const SFSE::LoadInterface* a_sfse)
+SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 {
 	SFSE::Init(a_sfse, { .trampoline = false });
 	SFSE::GetMessagingInterface()->RegisterListener(MessageHandler);

@@ -59,7 +59,7 @@ namespace AutoUnlock
 			return _ActivateFunc(a_this, a_data);
 		}
 
-		inline static REL::HookVFT _ActivateFunc{ T::VTABLE[idx], 0x54, ActivateFunc };
+		inline static REL::THookVFT _ActivateFunc{ T::VTABLE[idx], 0x54, ActivateFunc };
 	};
 
 	void InstallOnPostLoad();

@@ -13,7 +13,7 @@ struct Setting
 	std::int32_t unlockInaccessible{ -1 };
 };
 
-class Settings : public REX::Singleton<Settings>
+class Settings : public REX::TSingleton<Settings>
 {
 public:
 	void Load()
